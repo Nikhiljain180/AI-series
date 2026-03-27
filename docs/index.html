@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enterprise RAG: What Breaks at Scale — Series</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #555;
+      --link: #0b57d0;
+      --border: #e0e0e0;
+      --bg: #fafafa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.65;
+      color: var(--text);
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+      background: var(--bg);
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      line-height: 1.25;
+      margin-top: 0;
+    }
+    .lede {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+    }
+    article {
+      margin-bottom: 2.25rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    article:last-of-type {
+      border-bottom: none;
+    }
+    h2 {
+      font-size: 1.15rem;
+      margin: 0 0 0.5rem;
+    }
+    h2 a {
+      color: var(--text);
+      text-decoration: none;
+    }
+    h2 a:hover {
+      color: var(--link);
+      text-decoration: underline;
+    }
+    p {
+      margin: 0 0 0.75rem;
+    }
+    .notebook {
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+    }
+    .notebook a {
+      color: var(--link);
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--link); }
+  </style>
+</head>
+<body>
+  <h1>Enterprise RAG: What Breaks at Scale</h1>
+  <p class="lede">
+    Ten notebooks on the parts of retrieval-augmented generation that tutorials usually skip:
+    permissions, caching, stale indexes, and the gap between “similar” and “correct.”
+    Each link opens a static HTML export you can read in the browser; clone the repo if you want to run the code.
+  </p>
+
+  <article>
+    <h2><a href="01_not_all_vectors_are_equal_embedding_choice.html">1. Not all vectors are equal</a></h2>
+    <p>
+      I still see teams treat the embedding model as an afterthought—whatever shipped with the sample repo.
+      In practice, that choice drives recall, latency, and how much pain you will have when queries are phrased nothing like your documents.
+      This part runs the same small corpus through two different sentence-transformers models so you can see the tradeoff on real top-1 hits, not on a leaderboard in isolation.
+    </p>
+    <p class="notebook">
+      Notebook (source): <a href="https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb">01_not_all_vectors_are_equal_embedding_choice.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="02_right_chunk_wrong_context_structural_chunking.html">2. The right chunk, wrong context</a></h2>
+    <p>
+      Fixed-size chunking is easy to implement and miserable to debug: the embedding looks relevant because half of the answer sits in the <em>next</em> window.
+      I walk one policy-style document with a buried identifier and compare fixed windows to paragraph-aware splits so the failure mode is obvious.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/02_right_chunk_wrong_context_structural_chunking.ipynb">02_right_chunk_wrong_context_structural_chunking.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="03_when_dense_search_misses_keywords_hybrid_bm25.html">3. When dense search misses keywords</a></h2>
+    <p>
+      Pure vector search can look smooth in a demo and then lose error codes, SKUs, and internal names that users type verbatim.
+      Here I combine BM25 with the vector store and fuse rankings with RRF—small enough to read in one sitting, concrete enough to steal for a prototype.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/03_when_dense_search_misses_keywords_hybrid_bm25.ipynb">03_when_dense_search_misses_keywords_hybrid_bm25.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="04_cross_encoder_rerank_cost_vs_quality.html">4. Cross-encoder reranking: cost vs quality</a></h2>
+    <p>
+      Bi-encoders are fast because query and document never attend to each other; that is also why ordering is sometimes wrong.
+      I retrieve a short list with the bi-encoder, then rerank with a small cross-encoder—the pattern I default to when stakeholders care about precision more than p50 latency.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/04_cross_encoder_rerank_cost_vs_quality.ipynb">04_cross_encoder_rerank_cost_vs_quality.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.html">5. ACL at query time</a></h2>
+    <p>
+      If you retrieve first and “filter in the prompt,” you have already lost: the model may still see text it should not, and auditors will not care about your intentions.
+      This notebook uses two synthetic tenants in one Chroma collection and shows the difference between an unfiltered query and a metadata filter applied at retrieval time.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.ipynb">05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="06_semantic_cache_similarity_ttl_and_invalidation.html">6. Semantic cache, TTL, invalidation</a></h2>
+    <p>
+      Exact-match caches miss paraphrases; semantic caches answer faster—and can confidently return something that was true last week.
+      I keep a toy in-memory cache keyed by embedding similarity and show what happens when you bump a knowledge-base version without invalidating entries.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/06_semantic_cache_similarity_ttl_and_invalidation.ipynb">06_semantic_cache_similarity_ttl_and_invalidation.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="07_stale_index_incremental_updates_and_tombstones.html">7. Stale index, updates, tombstones</a></h2>
+    <p>
+      Your source of truth changes; the vector index is always a little behind. The painful bugs are the ones where an old chunk still ranks high after a policy change.
+      I simulate two versions of a “policy” document and delete the stale id so you can see how a hard delete changes what retrieval returns.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/07_stale_index_incremental_updates_and_tombstones.ipynb">07_stale_index_incremental_updates_and_tombstones.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="08_grounded_or_confidently_wrong_faithfulness_checks.html">8. Grounded or confidently wrong</a></h2>
+    <p>
+      Before you add a fancier judge model, it helps to have a blunt heuristic: flag sentences whose content words never appear in the retrieved context.
+      This is not a replacement for human review or NLI, but it is cheap and it catches the “free lifetime license” class of hallucination in demos.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/08_grounded_or_confidently_wrong_faithfulness_checks.ipynb">08_grounded_or_confidently_wrong_faithfulness_checks.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="09_rag_is_not_one_metric_retrieval_and_generation_eval.html">9. RAG is not one metric</a></h2>
+    <p>
+      I split the problem in two: did we fetch the right chunk, and only then whether the model said something faithful.
+      With a tiny labeled set and chunk ids, I compute Recall@k for retrieval—something you can regression-test when someone swaps embeddings or chunking strategy.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/09_rag_is_not_one_metric_retrieval_and_generation_eval.ipynb">09_rag_is_not_one_metric_retrieval_and_generation_eval.ipynb</a>
+    </p>
+  </article>
+
+  <article>
+    <h2><a href="10_prompt_injection_and_pii_boundary_for_rag_apps.html">10. Prompt injection and PII boundaries</a></h2>
+    <p>
+      Retrieved text is user-supplied in the worst sense: it can carry instructions meant for the model, not the end user.
+      I contrast a naive single “context” blob with an explicit trusted vs untrusted split, and show a tiny regex redaction for emails and phone numbers—production needs more layers, but you have to start somewhere visible.
+    </p>
+    <p class="notebook">
+      Notebook: <a href="https://github.com/Nikhiljain180/AI-series/blob/main/10_prompt_injection_and_pii_boundary_for_rag_apps.ipynb">10_prompt_injection_and_pii_boundary_for_rag_apps.ipynb</a>
+    </p>
+  </article>
+
+  <footer>
+    <p>— Nikhil Jain · <a href="https://www.linkedin.com/in/nikhiljain180/">LinkedIn</a> · <a href="https://github.com/Nikhiljain180/AI-series">GitHub repo</a></p>
+  </footer>
+</body>
+</html>
