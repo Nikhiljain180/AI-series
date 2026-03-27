@@ -37,26 +37,158 @@ def save(filename: str, cells: list) -> None:
 
 
 def main() -> None:
-    # --- 01 embeddings ---
+    # --- 01 embeddings (full lesson: chunking choices + embedding models) ---
     save(
         "01_not_all_vectors_are_equal_embedding_choice.ipynb",
         [
             md(
                 """# 01 — Not All Vectors Are Equal: Embedding Choice
 
-**Problem:** Swapping the embedding model changes recall, latency, and memory. Picking “whatever the tutorial used” often mismatches your domain or SLA.
+You choose more than a model name. Before any vector goes into an index, you decide **how text is split** and **which encoder** turns those pieces into embeddings. This notebook walks through both, step by step, with runnable code.
 
-**In this notebook:** Encode the same corpus with two popular models, compare top-1 retrieval for a paraphrased query, and record model size / encode time."""
+**Run the code locally:** clone the repo, open this `.ipynb` in Jupyter from the repo root, and install `requirements.txt`.  
+**Source (edit / run):** [01_not_all_vectors_are_equal_embedding_choice.ipynb on GitHub](https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb)"""
+            ),
+            md(
+                """## Step 0 — What you are choosing
+
+| Layer | What it controls | Examples |
+|-------|------------------|----------|
+| **Chunking** | What one “document” in the index represents | Fixed window, paragraph/semantic splits, hierarchical sections |
+| **Embedding model** | How meaning is compressed into a vector | `all-MiniLM-L6-v2` vs `all-mpnet-base-v2`, multilingual, domain-tuned |
+| **Downstream** | Quality vs cost | Index size, query latency, recall on paraphrases |
+
+Bad chunking + a great model still returns the wrong span; a great chunk + a weak model can miss paraphrases. You tune both on **your** data."""
+            ),
+            md(
+                """## Step 1 — Fixed-size (sliding window) chunking
+
+**Idea:** Cut text every *N* characters (or tokens), often with overlap so boundaries do not swallow answers.
+
+**Pros:** Simple, predictable chunk count, easy to implement.  
+**Cons:** Splits mid-sentence or mid-policy; retrieval can return a fragment that is “similar” but missing the line that answers the question.
+
+Run the cell below on one synthetic policy blob and inspect where the cuts land."""
             ),
             code(
                 r"""import sys
-import time
 from pathlib import Path
 
 _REPO = Path.cwd().resolve()
 if (_REPO / "src").is_dir():
     sys.path.insert(0, str(_REPO / "src"))
 
+from rag_series_utils import chunk_fixed_size
+
+policy_doc = (
+    "## Refund policy\n"
+    "Enterprise customers may request a full refund within 30 days of the invoice date.\n"
+    "The billing dispute code is POL-ENT-7721 — include it in tickets.\n"
+    "\n"
+    "## API rate limits\n"
+    "Standard tier allows 100 requests per minute per API key."
+)
+
+flat = policy_doc.replace("\n", " ")
+fixed = chunk_fixed_size(flat, chunk_size=120, overlap=20)
+print(f"Fixed-size chunks ({len(fixed)} total):\n")
+for i, c in enumerate(fixed, 1):
+    print(f"--- chunk {i} ({len(c)} chars) ---")
+    print(c)
+    print()"""
+            ),
+            md(
+                """## Step 2 — Semantic chunking (paragraph / blank-line boundaries)
+
+**Idea:** Split where the author already broke ideas—paragraphs, double newlines, or sentence boundaries—not at a fixed character count.
+
+**Pros:** Keeps related sentences together; often better for Q&A when answers sit in one paragraph.  
+**Cons:** Very long paragraphs still need a max length; tables and lists need special rules.
+
+Below we reuse the same policy text with **newlines preserved** and merge paragraphs up to a character budget."""
+            ),
+            code(
+                r"""import sys
+from pathlib import Path
+
+_REPO = Path.cwd().resolve()
+if (_REPO / "src").is_dir():
+    sys.path.insert(0, str(_REPO / "src"))
+
+from rag_series_utils import chunk_by_paragraphs
+
+policy_doc = (
+    "## Refund policy\n"
+    "Enterprise customers may request a full refund within 30 days of the invoice date.\n"
+    "The billing dispute code is POL-ENT-7721 — include it in tickets.\n"
+    "\n"
+    "## API rate limits\n"
+    "Standard tier allows 100 requests per minute per API key."
+)
+
+semantic = chunk_by_paragraphs(policy_doc, max_chars=400)
+print(f"Semantic (paragraph) chunks ({len(semantic)} total):\n")
+for i, c in enumerate(semantic, 1):
+    print(f"--- chunk {i} ---")
+    print(c)
+    print()"""
+            ),
+            md(
+                """## Step 3 — Hierarchical chunking (structure / headings)
+
+**Idea:** One chunk per logical section—e.g. everything under `## Refund policy` until the next `##` heading. Mirrors how humans skim docs.
+
+**Pros:** Retrieval returns a whole section; good for intranets and manuals with clear outline.  
+**Cons:** Needs detectable structure (headings, HTML tags, or a TOC); flat PDFs need layout parsing first.
+
+We split on markdown `##` / `###` lines (see `chunk_by_headings` in `src/rag_series_utils.py`)."""
+            ),
+            code(
+                r"""import sys
+from pathlib import Path
+
+_REPO = Path.cwd().resolve()
+if (_REPO / "src").is_dir():
+    sys.path.insert(0, str(_REPO / "src"))
+
+from rag_series_utils import chunk_by_headings
+
+policy_doc = (
+    "## Refund policy\n"
+    "Enterprise customers may request a full refund within 30 days of the invoice date.\n"
+    "The billing dispute code is POL-ENT-7721 — include it in tickets.\n"
+    "\n"
+    "## API rate limits\n"
+    "Standard tier allows 100 requests per minute per API key."
+)
+
+hier = chunk_by_headings(policy_doc)
+print(f"Hierarchical chunks ({len(hier)} total):\n")
+for i, c in enumerate(hier, 1):
+    print(f"--- chunk {i} ---")
+    print(c)
+    print()"""
+            ),
+            md(
+                """## More choices (short list)
+
+These are not separate notebooks here, but they belong in the same design conversation:
+
+- **Token-aware windows** — chunk by tokenizer token budget (e.g. 256–512 tokens) instead of raw characters so you align with the embedding model’s training.
+- **Late interaction / ColBERT-style** — store token vectors instead of one vector per chunk; more accurate, heavier index.
+- **Multilingual vs English-only** — match the languages in your corpus and queries.
+- **Domain / fine-tuned encoders** — legal, medical, or support-ticket models when generic sentence embeddings plateau.
+- **Sparse + dense** — BM25 keywords alongside vectors (covered in a later part of this series).
+
+Next: hold chunking fixed and compare **two dense embedding models** on the same list of chunks."""
+            ),
+            md(
+                """## Step 4 — Embedding model choice (same chunks, two encoders)
+
+We use five short “chunks” (already one sentence each) and one **paraphrased** query. Compare **all-MiniLM-L6-v2** (small, fast) vs **all-mpnet-base-v2** (larger, often better semantics). Watch top-1 retrieval and encode time."""
+            ),
+            code(
+                r"""import time
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 
@@ -68,7 +200,7 @@ docs = [
     "Support SLAs: priority incidents receive first response within one business hour.",
 ]
 
-query = "How long do I have to get my money back after purchase?"  # paraphrase of refund window
+query = "How long do I have to get my money back after purchase?"
 
 models = {
     "fast_small": "sentence-transformers/all-MiniLM-L6-v2",
@@ -106,10 +238,13 @@ for r in results:
     print(r["label"], "->", r["top_doc"])"""
             ),
             md(
-                """**Takeaways**
-- Smaller models are faster but can miss paraphrases that a larger model catches.
-- **Measure on your data**: public benchmarks (e.g. MTEB) are a starting point, not the answer.
-- **Dimension and batching** affect index size and GPU/CPU throughput in production."""
+                """## Takeaways
+
+1. **Chunking** — Fixed window, semantic (paragraph), and hierarchical (headings) are three standard levers; pick based on document shape and where answers live.
+2. **Embedding model** — Smaller is faster; larger often handles paraphrase and nuance better. Benchmark on your queries, not only MTEB.
+3. **Ship both** — Log chunk boundaries and embedding model version when you debug a bad retrieval in production.
+
+**Again — runnable source:** [notebook on GitHub](https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb)"""
             ),
         ],
     )

@@ -62,6 +62,26 @@ def chunk_by_paragraphs(text: str, max_chars: int = 500) -> list[str]:
     return merged
 
 
+def chunk_by_headings(text: str, heading_pattern: str = r"^#{2,3}\s+.+$") -> list[str]:
+    """Hierarchical chunking: one chunk per markdown ## / ### section (heading + body until next heading)."""
+    lines = text.strip().splitlines()
+    chunks: list[str] = []
+    buf: list[str] = []
+    for line in lines:
+        if re.match(heading_pattern, line) and buf:
+            part = "\n".join(buf).strip()
+            if part:
+                chunks.append(part)
+            buf = [line]
+        else:
+            buf.append(line)
+    if buf:
+        part = "\n".join(buf).strip()
+        if part:
+            chunks.append(part)
+    return chunks
+
+
 def reciprocal_rank_fusion(
     ranked_lists: list[list[str]],
     k: int = 60,

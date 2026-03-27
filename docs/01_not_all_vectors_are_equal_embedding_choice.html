@@ -7801,18 +7801,70 @@ a.anchor-link {
 </div>
 
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2f56a520">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5c75a2fb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="01-%E2%80%94-Not-All-Vectors-Are-Equal:-Embedding-Choice">01 — Not All Vectors Are Equal: Embedding Choice<a class="anchor-link" href="#01-%E2%80%94-Not-All-Vectors-Are-Equal:-Embedding-Choice">¶</a></h1><p><strong>Problem:</strong> Swapping the embedding model changes recall, latency, and memory. Picking “whatever the tutorial used” often mismatches your domain or SLA.</p>
-<p><strong>In this notebook:</strong> Encode the same corpus with two popular models, compare top-1 retrieval for a paraphrased query, and record model size / encode time.</p>
+<h1 id="01-%E2%80%94-Not-All-Vectors-Are-Equal:-Embedding-Choice">01 — Not All Vectors Are Equal: Embedding Choice<a class="anchor-link" href="#01-%E2%80%94-Not-All-Vectors-Are-Equal:-Embedding-Choice">¶</a></h1><p>You choose more than a model name. Before any vector goes into an index, you decide <strong>how text is split</strong> and <strong>which encoder</strong> turns those pieces into embeddings. This notebook walks through both, step by step, with runnable code.</p>
+<p><strong>Run the code locally:</strong> clone the repo, open this <code>.ipynb</code> in Jupyter from the repo root, and install <code>requirements.txt</code>.<br/>
+<strong>Source (edit / run):</strong> <a href="https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb">01_not_all_vectors_are_equal_embedding_choice.ipynb on GitHub</a></p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=4e6d4ca2">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=07c173dd">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Step-0-%E2%80%94-What-you-are-choosing">Step 0 — What you are choosing<a class="anchor-link" href="#Step-0-%E2%80%94-What-you-are-choosing">¶</a></h2><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it controls</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Chunking</strong></td>
+<td>What one “document” in the index represents</td>
+<td>Fixed window, paragraph/semantic splits, hierarchical sections</td>
+</tr>
+<tr>
+<td><strong>Embedding model</strong></td>
+<td>How meaning is compressed into a vector</td>
+<td><code>all-MiniLM-L6-v2</code> vs <code>all-mpnet-base-v2</code>, multilingual, domain-tuned</td>
+</tr>
+<tr>
+<td><strong>Downstream</strong></td>
+<td>Quality vs cost</td>
+<td>Index size, query latency, recall on paraphrases</td>
+</tr>
+</tbody>
+</table>
+<p>Bad chunking + a great model still returns the wrong span; a great chunk + a weak model can miss paraphrases. You tune both on <strong>your</strong> data.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4eaf189f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Step-1-%E2%80%94-Fixed-size-(sliding-window)-chunking">Step 1 — Fixed-size (sliding window) chunking<a class="anchor-link" href="#Step-1-%E2%80%94-Fixed-size-(sliding-window)-chunking">¶</a></h2><p><strong>Idea:</strong> Cut text every <em>N</em> characters (or tokens), often with overlap so boundaries do not swallow answers.</p>
+<p><strong>Pros:</strong> Simple, predictable chunk count, easy to implement.<br/>
+<strong>Cons:</strong> Splits mid-sentence or mid-policy; retrieval can return a fragment that is “similar” but missing the line that answers the question.</p>
+<p>Run the cell below on one synthetic policy blob and inspect where the cuts land.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c398c476">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7821,13 +7873,176 @@ a.anchor-link {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">_REPO</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">))</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">rag_series_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">chunk_fixed_size</span>
+
+<span class="n">policy_doc</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"## Refund policy</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Enterprise customers may request a full refund within 30 days of the invoice date.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"The billing dispute code is POL-ENT-7721 — include it in tickets.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"## API rate limits</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Standard tier allows 100 requests per minute per API key."</span>
+<span class="p">)</span>
+
+<span class="n">flat</span> <span class="o">=</span> <span class="n">policy_doc</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span>
+<span class="n">fixed</span> <span class="o">=</span> <span class="n">chunk_fixed_size</span><span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fixed-size chunks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span><span class="si">}</span><span class="s2"> total):</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fixed</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--- chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars) ---"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8b675ca2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Step-2-%E2%80%94-Semantic-chunking-(paragraph-/-blank-line-boundaries)">Step 2 — Semantic chunking (paragraph / blank-line boundaries)<a class="anchor-link" href="#Step-2-%E2%80%94-Semantic-chunking-(paragraph-/-blank-line-boundaries)">¶</a></h2><p><strong>Idea:</strong> Split where the author already broke ideas—paragraphs, double newlines, or sentence boundaries—not at a fixed character count.</p>
+<p><strong>Pros:</strong> Keeps related sentences together; often better for Q&amp;A when answers sit in one paragraph.<br/>
+<strong>Cons:</strong> Very long paragraphs still need a max length; tables and lists need special rules.</p>
+<p>Below we reuse the same policy text with <strong>newlines preserved</strong> and merge paragraphs up to a character budget.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2154f936">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">_REPO</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rag_series_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">chunk_by_paragraphs</span>
+
+<span class="n">policy_doc</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"## Refund policy</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Enterprise customers may request a full refund within 30 days of the invoice date.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"The billing dispute code is POL-ENT-7721 — include it in tickets.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"## API rate limits</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Standard tier allows 100 requests per minute per API key."</span>
+<span class="p">)</span>
+
+<span class="n">semantic</span> <span class="o">=</span> <span class="n">chunk_by_paragraphs</span><span class="p">(</span><span class="n">policy_doc</span><span class="p">,</span> <span class="n">max_chars</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Semantic (paragraph) chunks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">semantic</span><span class="p">)</span><span class="si">}</span><span class="s2"> total):</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">semantic</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--- chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> ---"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1e0e364a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Step-3-%E2%80%94-Hierarchical-chunking-(structure-/-headings)">Step 3 — Hierarchical chunking (structure / headings)<a class="anchor-link" href="#Step-3-%E2%80%94-Hierarchical-chunking-(structure-/-headings)">¶</a></h2><p><strong>Idea:</strong> One chunk per logical section—e.g. everything under <code>## Refund policy</code> until the next <code>##</code> heading. Mirrors how humans skim docs.</p>
+<p><strong>Pros:</strong> Retrieval returns a whole section; good for intranets and manuals with clear outline.<br/>
+<strong>Cons:</strong> Needs detectable structure (headings, HTML tags, or a TOC); flat PDFs need layout parsing first.</p>
+<p>We split on markdown <code>##</code> / <code>###</code> lines (see <code>chunk_by_headings</code> in <code>src/rag_series_utils.py</code>).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=84cc1136">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">_REPO</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_REPO</span> <span class="o">/</span> <span class="s2">"src"</span><span class="p">))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rag_series_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">chunk_by_headings</span>
+
+<span class="n">policy_doc</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"## Refund policy</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Enterprise customers may request a full refund within 30 days of the invoice date.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"The billing dispute code is POL-ENT-7721 — include it in tickets.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"## API rate limits</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Standard tier allows 100 requests per minute per API key."</span>
+<span class="p">)</span>
+
+<span class="n">hier</span> <span class="o">=</span> <span class="n">chunk_by_headings</span><span class="p">(</span><span class="n">policy_doc</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Hierarchical chunks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hier</span><span class="p">)</span><span class="si">}</span><span class="s2"> total):</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hier</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--- chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> ---"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=79b83008">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="More-choices-(short-list)">More choices (short list)<a class="anchor-link" href="#More-choices-(short-list)">¶</a></h2><p>These are not separate notebooks here, but they belong in the same design conversation:</p>
+<ul>
+<li><strong>Token-aware windows</strong> — chunk by tokenizer token budget (e.g. 256–512 tokens) instead of raw characters so you align with the embedding model’s training.</li>
+<li><strong>Late interaction / ColBERT-style</strong> — store token vectors instead of one vector per chunk; more accurate, heavier index.</li>
+<li><strong>Multilingual vs English-only</strong> — match the languages in your corpus and queries.</li>
+<li><strong>Domain / fine-tuned encoders</strong> — legal, medical, or support-ticket models when generic sentence embeddings plateau.</li>
+<li><strong>Sparse + dense</strong> — BM25 keywords alongside vectors (covered in a later part of this series).</li>
+</ul>
+<p>Next: hold chunking fixed and compare <strong>two dense embedding models</strong> on the same list of chunks.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1d57351">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Step-4-%E2%80%94-Embedding-model-choice-(same-chunks,-two-encoders)">Step 4 — Embedding model choice (same chunks, two encoders)<a class="anchor-link" href="#Step-4-%E2%80%94-Embedding-model-choice-(same-chunks,-two-encoders)">¶</a></h2><p>We use five short “chunks” (already one sentence each) and one <strong>paraphrased</strong> query. Compare <strong>all-MiniLM-L6-v2</strong> (small, fast) vs <strong>all-mpnet-base-v2</strong> (larger, often better semantics). Watch top-1 retrieval and encode time.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c244f85d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sentence_transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformer</span><span class="p">,</span> <span class="n">util</span>
 
@@ -7839,7 +8054,7 @@ a.anchor-link {
     <span class="s2">"Support SLAs: priority incidents receive first response within one business hour."</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">query</span> <span class="o">=</span> <span class="s2">"How long do I have to get my money back after purchase?"</span>  <span class="c1"># paraphrase of refund window</span>
+<span class="n">query</span> <span class="o">=</span> <span class="s2">"How long do I have to get my money back after purchase?"</span>
 
 <span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"fast_small"</span><span class="p">:</span> <span class="s2">"sentence-transformers/all-MiniLM-L6-v2"</span><span class="p">,</span>
@@ -7881,18 +8096,18 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fae6eebd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6ce71efb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Takeaways</strong></p>
-<ul>
-<li>Smaller models are faster but can miss paraphrases that a larger model catches.</li>
-<li><strong>Measure on your data</strong>: public benchmarks (e.g. MTEB) are a starting point, not the answer.</li>
-<li><strong>Dimension and batching</strong> affect index size and GPU/CPU throughput in production.</li>
-</ul>
+<h2 id="Takeaways">Takeaways<a class="anchor-link" href="#Takeaways">¶</a></h2><ol>
+<li><strong>Chunking</strong> — Fixed window, semantic (paragraph), and hierarchical (headings) are three standard levers; pick based on document shape and where answers live.</li>
+<li><strong>Embedding model</strong> — Smaller is faster; larger often handles paraphrase and nuance better. Benchmark on your queries, not only MTEB.</li>
+<li><strong>Ship both</strong> — Log chunk boundaries and embedding model version when you debug a bad retrieval in production.</li>
+</ol>
+<p><strong>Again — runnable source:</strong> <a href="https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb">notebook on GitHub</a></p>
 </div>
 </div>
 </div>
