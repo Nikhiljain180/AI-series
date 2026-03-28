@@ -11,6 +11,7 @@
       --muted: #94a3b8;
       --accent: #38bdf8;
       --hover: #7dd3fc;
+      --blog: #a7f3d0;
     }
     * { box-sizing: border-box; }
     body {
@@ -22,7 +23,7 @@
       line-height: 1.55;
       padding: 2.5rem 1.25rem 4rem;
     }
-    .wrap { max-width: 38rem; margin: 0 auto; }
+    .wrap { max-width: 40rem; margin: 0 auto; }
     h1 {
       font-size: 1.5rem;
       font-weight: 700;
@@ -37,10 +38,17 @@
     ol.topics { list-style: none; padding: 0; margin: 0; }
     ol.topics li {
       margin: 0;
-      padding-bottom: 1.25rem;
+      padding-bottom: 1.35rem;
       border-bottom: 1px solid #334155;
     }
     ol.topics li:first-child { border-top: 1px solid #334155; padding-top: 0.25rem; }
+    .blog-row {
+      font-size: 0.88rem;
+      margin: 0.5rem 0 0.35rem;
+      line-height: 1.6;
+    }
+    .blog-row a { color: var(--blog); font-weight: 600; text-decoration: none; }
+    .blog-row a:hover { text-decoration: underline; }
     ol.topics a.lesson {
       display: inline-block;
       margin-top: 0.85rem;
@@ -55,13 +63,14 @@
       font-size: 0.9rem;
       color: #cbd5e1;
     }
-    ol.topics a.github {
-      font-size: 0.88rem;
+    ol.topics a.github, ol.topics a.export {
+      font-size: 0.85rem;
       color: var(--muted);
       text-decoration: underline;
       text-underline-offset: 3px;
+      margin-right: 0.75rem;
     }
-    ol.topics a.github:hover { color: var(--accent); }
+    ol.topics a.github:hover, ol.topics a.export:hover { color: var(--accent); }
     footer {
       margin-top: 2.5rem;
       font-size: 0.85rem;
@@ -73,58 +82,78 @@
 <body>
   <div class="wrap">
     <h1>Enterprise RAG: What Breaks at Scale</h1>
-    <p class="sub">Open a lesson (HTML) to read step-by-step explanations and see the code. Use the GitHub link under each topic to run or change the notebook yourself.</p>
+    <p class="sub"><strong style="color:#a7f3d0;">Read the blog</strong> for long-form explanations (plain language, written like a serious article). <strong style="color:#38bdf8;">Notebook export</strong> is the auto-generated HTML from Jupyter—useful for code cells. <strong>GitHub</strong> opens the <code>.ipynb</code> to run or edit locally.</p>
 
     <ol class="topics">
       <li>
-        <a class="lesson" href="01_not_all_vectors_are_equal_embedding_choice.html">1. Not all vectors are equal</a>
-        <p class="teach">Walks through <strong>fixed-size</strong>, <strong>semantic (paragraph)</strong>, and <strong>hierarchical (heading)</strong> chunking with examples, then compares two <strong>embedding models</strong> (speed vs quality) on the same retrieval task.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/01-not-all-vectors-equal.html">Part 1</a> · <a href="articles/01b-embeddings-deep-dive.html">Part 2</a> · <a href="articles/01c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/01-not-all-vectors-equal.html">1. Not all vectors are equal</a>
+        <p class="teach">Chunking (fixed, semantic, hierarchical) and embedding models—explained for students and production engineers. Start with Part 1.</p>
+        <a class="export" href="01_not_all_vectors_are_equal_embedding_choice.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/01_not_all_vectors_are_equal_embedding_choice.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="02_right_chunk_wrong_context_structural_chunking.html">2. The right chunk, wrong context</a>
-        <p class="teach">Why naive windows split the answer across chunks—and how paragraph-style splitting fixes it for one policy-style doc.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/02_right_chunk_wrong_context_structural_chunking.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/02-right-chunk-wrong-context.html">Part 1</a> · <a href="articles/02b-structural-chunking-deep-dive.html">Part 2</a> · <a href="articles/02c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/02-right-chunk-wrong-context.html">2. The right chunk, wrong context</a>
+        <p class="teach">Structural chunking, boundaries, and why “relevant” fragments still miss the exception clause. Start with Part 1; run the notebook for code.</p>
+        <a class="export" href="02_right_chunk_wrong_context_structural_chunking.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/02_right_chunk_wrong_context_structural_chunking.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="03_when_dense_search_misses_keywords_hybrid_bm25.html">3. When dense search misses keywords</a>
-        <p class="teach">Dense vectors vs exact tokens (error codes, SKUs); fuse BM25 and vector rankings with RRF.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/03_when_dense_search_misses_keywords_hybrid_bm25.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/03-hybrid-search-bm25-vectors.html">Part 1</a> · <a href="articles/03b-fusion-logging-and-regressions.html">Part 2</a> · <a href="articles/03c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/03-hybrid-search-bm25-vectors.html">3. When dense search misses keywords</a>
+        <p class="teach">Hybrid BM25 + vectors, fusion (RRF), and logging which leg saved the query. Start with Part 1.</p>
+        <a class="export" href="03_when_dense_search_misses_keywords_hybrid_bm25.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/03_when_dense_search_misses_keywords_hybrid_bm25.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="04_cross_encoder_rerank_cost_vs_quality.html">4. Cross-encoder reranking</a>
-        <p class="teach">Retrieve wide with a bi-encoder, rerank the short list with a cross-encoder—precision vs latency.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/04_cross_encoder_rerank_cost_vs_quality.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/04-cross-encoder-reranking.html">Part 1</a> · <a href="articles/04b-latency-cost-and-candidates.html">Part 2</a> · <a href="articles/04c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/04-cross-encoder-reranking.html">4. Cross-encoder reranking</a>
+        <p class="teach">Retrieve wide, rerank narrow: quality vs latency vs GPU memory. Start with Part 1.</p>
+        <a class="export" href="04_cross_encoder_rerank_cost_vs_quality.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/04_cross_encoder_rerank_cost_vs_quality.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.html">5. ACL at query time</a>
-        <p class="teach">Filter at retrieval with metadata so tenants do not leak across users.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/05-acl-at-query-time.html">Part 1</a> · <a href="articles/05b-filters-audits-and-threats.html">Part 2</a> · <a href="articles/05c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/05-acl-at-query-time.html">5. ACL at query time</a>
+        <p class="teach">Enforce authorization in retrieval—filters, audits, cross-tenant tests. Start with Part 1.</p>
+        <a class="export" href="05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/05_acl_at_query_time_why_rag_leaks_or_blocks_wrong.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="06_semantic_cache_similarity_ttl_and_invalidation.html">6. Semantic cache &amp; invalidation</a>
-        <p class="teach">Semantic similarity for cache hits—and why you must version or invalidate when the KB changes.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/06_semantic_cache_similarity_ttl_and_invalidation.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/06-semantic-cache-invalidation.html">Part 1</a> · <a href="articles/06b-metrics-and-two-tier-caching.html">Part 2</a> · <a href="articles/06c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/06-semantic-cache-invalidation.html">6. Semantic cache &amp; invalidation</a>
+        <p class="teach">Similarity + version tags, TTL, false hits—cache without lying. Start with Part 1.</p>
+        <a class="export" href="06_semantic_cache_similarity_ttl_and_invalidation.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/06_semantic_cache_similarity_ttl_and_invalidation.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="07_stale_index_incremental_updates_and_tombstones.html">7. Stale index &amp; tombstones</a>
-        <p class="teach">Deletes in the vector store so old policy text stops surfacing after an update.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/07_stale_index_incremental_updates_and_tombstones.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/07-stale-index-tombstones.html">Part 1</a> · <a href="articles/07b-incremental-updates-and-ops.html">Part 2</a> · <a href="articles/07c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/07-stale-index-tombstones.html">7. Stale index &amp; tombstones</a>
+        <p class="teach">Incremental updates, stable IDs, deletes, ingestion lag. Start with Part 1.</p>
+        <a class="export" href="07_stale_index_incremental_updates_and_tombstones.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/07_stale_index_incremental_updates_and_tombstones.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="08_grounded_or_confidently_wrong_faithfulness_checks.html">8. Grounded or confidently wrong</a>
-        <p class="teach">A simple overlap check to flag sentences not supported by retrieved context.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/08_grounded_or_confidently_wrong_faithfulness_checks.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/08-faithfulness-and-grounding.html">Part 1</a> · <a href="articles/08b-layered-guards-and-rubrics.html">Part 2</a> · <a href="articles/08c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/08-faithfulness-and-grounding.html">8. Grounded or confidently wrong</a>
+        <p class="teach">Cheap faithfulness checks, abstention, and rubrics—before the LLM sounds sure. Start with Part 1.</p>
+        <a class="export" href="08_grounded_or_confidently_wrong_faithfulness_checks.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/08_grounded_or_confidently_wrong_faithfulness_checks.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="09_rag_is_not_one_metric_retrieval_and_generation_eval.html">9. RAG is not one metric</a>
-        <p class="teach">Recall@k on chunk IDs—separate retrieval quality from generation.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/09_rag_is_not_one_metric_retrieval_and_generation_eval.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/09-rag-evaluation-metrics.html">Part 1</a> · <a href="articles/09b-golden-sets-and-slicing.html">Part 2</a> · <a href="articles/09c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/09-rag-evaluation-metrics.html">9. RAG is not one metric</a>
+        <p class="teach">Recall@k, slicing, golden sets—retrieval vs generation eval. Start with Part 1.</p>
+        <a class="export" href="09_rag_is_not_one_metric_retrieval_and_generation_eval.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/09_rag_is_not_one_metric_retrieval_and_generation_eval.ipynb">Run on GitHub →</a>
       </li>
       <li>
-        <a class="lesson" href="10_prompt_injection_and_pii_boundary_for_rag_apps.html">10. Prompt injection &amp; PII</a>
-        <p class="teach">Untrusted retrieved text vs trusted system policy; naive redaction patterns.</p>
-        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/10_prompt_injection_and_pii_boundary_for_rag_apps.ipynb">Run the notebook on GitHub →</a>
+        <div class="blog-row">Blog (~10k words): <a href="articles/10-prompt-injection-pii.html">Part 1</a> · <a href="articles/10b-layered-defenses-and-ux.html">Part 2</a> · <a href="articles/10c-supplement-scenarios.html">Part 3</a></div>
+        <a class="lesson" href="articles/10-prompt-injection-pii.html">10. Prompt injection &amp; PII</a>
+        <p class="teach">Untrusted chunks, layered defenses, PII boundaries. Start with Part 1.</p>
+        <a class="export" href="10_prompt_injection_and_pii_boundary_for_rag_apps.html">Notebook HTML export →</a>
+        <a class="github" href="https://github.com/Nikhiljain180/AI-series/blob/main/10_prompt_injection_and_pii_boundary_for_rag_apps.ipynb">Run on GitHub →</a>
       </li>
     </ol>
 
