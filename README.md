@@ -1,8 +1,10 @@
 # Enterprise RAG: What Breaks at Scale
 
-Long-form **blog articles** (readable in the browser, ~10k words per topic across three parts) plus runnable **Jupyter notebooks** on chunking, hybrid search, access control, caching, stale indexes, evaluation, and safety. Stack: sentence-transformers, Chroma, BM25, cross-encoder—runs locally.
+**Series landing page (rendered `docs/index.html`): [open in browser →](https://nikhiljain180.github.io/AI-series/)** — With [GitHub Pages](https://docs.github.com/pages) serving the `docs/` folder, that URL is the same entry point as [`docs/index.html`](docs/index.html); it is not a separate copy.
 
-**[Browse the series (site)](https://nikhiljain180.github.io/AI-series/)**
+GitHub’s README preview only renders Markdown. It cannot embed the full styled HTML of `index.html` inside this file (no live iframe of your site). Use the link above for the **same preview** you get from the deployed landing page. To inspect the file in the repo, open [`docs/index.html`](docs/index.html) (you may see source or GitHub’s HTML view depending on the UI).
+
+Long-form **blog articles** (readable in the browser, ~10k words per topic across three parts) plus runnable **Jupyter notebooks** on chunking, hybrid search, access control, caching, stale indexes, evaluation, and safety. Stack: sentence-transformers, Chroma, BM25, cross-encoder—runs locally.
 
 ## Topics (blog + notebook)
 
